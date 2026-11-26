@@ -68,7 +68,7 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{ou
 <div style="display: flex; flex-direction: column; gap: 5px;"><label for="q9" style="font-size: 14px; color: #C9D8D6;">9. Seller shared 3 years of tax returns?</label><select id="q9" value="{{returns}}" onChange="{{onReturns}}" style="{{inputStyle}}"><option value="yes">Yes</option><option value="no">Not yet</option></select></div>
 <div style="display: flex; flex-direction: column; gap: 5px;"><label for="q10" style="font-size: 14px; color: #C9D8D6;">10. Do the returns show the cash flow claimed?</label><select id="q10" value="{{matches}}" onChange="{{onMatches}}" style="{{inputStyle}}"><option value="yes">Yes</option><option value="no">No, they show less</option><option value="unk">Not sure yet</option></select></div>
 <div style="display: flex; flex-direction: column; gap: 5px;"><label for="q11" style="font-size: 14px; color: #C9D8D6;">11. Any eligibility issues below?</label><select id="q11" value="{{elig}}" onChange="{{onElig}}" style="{{inputStyle}}"><option value="none">None apply</option><option value="some">One or more apply</option><option value="unk">Not sure</option></select></div>
-<p style="margin: 0; grid-column: 1 / -1; font-size: 13px; line-height: 1.55; color: #9DB5B5;">Eligibility issues include: overdue federal debt, such as taxes or student loans; a past default on a government loan; or an owner who isn't a U.S. citizen or U.S. national. Full list in SBA SOP 50 10 8.1.</p>
+<p style="margin: 0; grid-column: 1 / -1; font-size: 13px; line-height: 1.55; color: #9DB5B5;">Eligibility issues include: overdue federal debt, such as taxes or student loans; a past default on a government loan; or an owner who isn't a U.S. citizen or U.S. national living in the U.S. Full list in SBA SOP 50 10 8.1.</p>
 </fieldset>
 </div>
 
@@ -105,7 +105,7 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{ou
 <span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 26px; font-weight: 700; font-stretch: 115%;">{{similarCount}}</span><span style="font-size: 14px; font-weight: 600;">{{similarText}}</span></span>
 <span style="font-size: 15px; font-weight: 700; white-space: nowrap;">See them →</span>
 </a>
-<p style="margin: 0; font-size: 12px; line-height: 1.5; color: #9DB5B5;">Information only, not a loan decision or advice. Assumes {{assumeText}}. Rules from SBA SOP 50 10 8.1, for loans given an SBA loan number on or after Oct 1, 2026. Funded deals from SBA 7(a) loan data, as of June 30, 2026.</p>
+<p style="margin: 0; font-size: 12px; line-height: 1.5; color: #9DB5B5;">Information only, not a loan decision or advice. Assumes {{assumeText}}. Rules from SBA SOP 50 10 8.1 (published Sept 25, 2026), Appendix 15, for loans given an SBA loan number on or after Oct 1, 2026; checked against the SOP text on Nov 25, 2026. Funded deals from SBA 7(a) loan data, as of June 30, 2026.</p>
 </div>
 
 </div>
@@ -640,11 +640,12 @@ let tag, head, body, box;
 const base = 'border-radius: 12px; padding: 22px 24px; display: flex; flex-direction: column; gap: 8px;';
 if (elig === 'some') {
 tag = 'STOP AND CHECK'; head = 'An eligibility issue comes first.'; body = 'Some issues make a deal ineligible for an SBA loan no matter the numbers. Raise it with a lender before you spend money on this deal.'; box = base + 'background: #8E2F20; color: #FFFFFF;';
-} else if (dscrOk && equityOk) {
+} else if (dscrOk && equityOk && loan <= 5000000) {
 tag = 'GREEN'; head = 'Clears the SBA\'s bar.'; body = 'Your numbers pass the SBA\'s coverage and down-payment rules. Worth taking to a lender, with the checklist below in hand.'; box = base + 'background: #1E6B47; color: #FFFFFF;';
 } else {
 const fixes = [];
 if (!dscrOk) fixes.push('at this down payment, the cash flow supports a price up to about ' + money(maxPrice));
+if (loan > 5000000) fixes.push('the SBA loan would be over the $5M limit, so it needs more down or seller financing');
 if (!equityOk) fixes.push('at this price, you need ' + money(cashShort) + ' more cash down');
 const close = (!dscrOk ? dscr >= 1.1 : true) && (!equityOk ? cashShort <= 0.05 * price : true);
 if (close) { tag = 'YELLOW'; head = 'Close, not there yet.'; box = base + 'background: #F2B544; color: #062A30;'; }
@@ -655,14 +656,15 @@ const ok = 'color: #7FD6A4; font-weight: 700; font-size: 17px;';
 const bad = 'color: #FF9A85; font-weight: 700; font-size: 17px;';
 const warn = 'color: #F2B544; font-weight: 700; font-size: 17px;';
 const rules = [
-{ mark: dscrOk ? '✓' : '✕', markStyle: dscrOk ? ok : bad, label: 'Cash flow covers the loan payments', note: 'Needs 1.25x, from tax returns, not projections', value: dscr >= 99 ? 'No loan' : dscr.toFixed(2) + 'x' },
+{ mark: dscrOk ? '✓' : '✕', markStyle: dscrOk ? ok : bad, label: 'Cash flow covers the loan payments', note: 'Needs 1.25x on the last year\'s tax returns (or a two-year average). Projections don\'t count', value: dscr >= 99 ? 'No loan' : dscr.toFixed(2) + 'x' },
 { mark: equityOk ? '✓' : '✕', markStyle: equityOk ? ok : bad, label: '10% down payment', note: '10% of the total project, which also includes working capital and closing costs. This uses price only, so your real minimum is a bit higher. Seller financing counts for up to half, only if on full standby', value: money(down + sellerCounts) + ' of ' + money(need) },
-{ mark: '!', markStyle: warn, label: 'Business valuation', note: 'Required on every SBA acquisition', value: 'Required' },
-{ mark: price >= 3000000 ? '!' : '✓', markStyle: price >= 3000000 ? warn : ok, label: 'Quality-of-earnings report', note: 'Required at $3M and up', value: price >= 3000000 ? 'Required' : 'Not needed' }
+{ mark: '!', markStyle: warn, label: 'Business valuation', note: price <= 350000 ? 'At $350K or less, the lender may value the business itself' : 'An independent, accredited appraiser hired by the lender', value: 'Required' },
+{ mark: price >= 3000000 ? '!' : '✓', markStyle: price >= 3000000 ? warn : ok, label: 'Quality-of-earnings report', note: 'Required at $3M and up', value: price >= 3000000 ? 'Required' : 'Not needed' },
+{ mark: loan <= 5000000 ? '✓' : '✕', markStyle: loan <= 5000000 ? ok : bad, label: 'SBA 7(a) loan limit', note: 'Up to $5M per loan', value: loan <= 5000000 ? 'Within limit' : 'Over $5M' }
 ];
 const L = (good, label, note) => ({ mark: good === true ? '✓' : (good === false ? '✕' : '?'), markStyle: good === true ? ok : (good === false ? bad : warn), label: label, note: note });
 const lender = [
-s.exp === '3' ? L(true, 'Experience', '3+ years in the trade or managing people.') : L(false, 'Experience', 'Lenders want to see you can run it. Common fixes: keep the seller on through a transition, or hire a licensed manager. Typical requirement: Pending lender input.'),
+s.exp === '3' ? L(true, 'Experience', '3+ years in the trade or managing people.') : L(false, 'Experience', 'Lenders want to see you can run it. Common fixes: hire the seller as a paid consultant for up to 24 months (the SBA\'s limit), or hire a licensed manager. Typical requirement: Pending lender input.'),
 s.credit === 'unk' ? L(null, 'Credit score', 'Check it before you apply; it\'s free. Typical floor: Pending lender input.') : (s.credit === 'lt650' || s.credit === '650' ? L(false, 'Credit score', 'Below what many lenders prefer. Typical floor: Pending lender input.') : L(true, 'Credit score', 'In the range most lenders prefer. Typical floor: Pending lender input.')),
 L(null, 'Cash left after closing: ' + money(s.reserves), 'Lenders look for a cushion after closing. Typical amount: Pending lender input.'),
 s.returns === 'yes' ? L(true, 'Three years of tax returns', 'The lender will ask for these first.') : L(false, 'Three years of tax returns', 'Ask the seller for them before going further. Coverage is judged on these, not on projections.'),

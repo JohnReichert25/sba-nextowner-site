@@ -1,5 +1,9 @@
 import re
 src=open('source/site.dc.html').read()
+# sba_index_inject: always embed the current data/sba/index.json so state counts match the data files
+import json as _j, re as _r
+_ix=_j.dumps(_j.load(open('data/sba/index.json')),separators=(',',':'))
+src=_r.sub(r'sbaIndex\(\) \{\nreturn .*?;\n\}', lambda m: 'sbaIndex() {\nreturn '+_ix+';\n}', src, count=1, flags=_r.S)
 helmet=re.search(r'<helmet>(.*?)</helmet>',src,re.S).group(1)
 body=re.search(r'</helmet>(.*)</x-dc>',src,re.S).group(1)
 js=re.search(r"data-props=.*?>\n(.*?)</script>",src,re.S).group(1)

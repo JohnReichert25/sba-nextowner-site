@@ -6,6 +6,7 @@ Row: [name, key, city, county, trade, date, amount, lender, termMonths, jobs, ki
 Privacy: sole proprietors' (BusinessType INDIVIDUAL) names are withheld; no street addresses are kept."""
 import csv, json, re, statistics, sys, glob, os, collections
 SRC, ASOF = sys.argv[1], sys.argv[2]
+TAG = ASOF[2:4] + ASOF[5:7] + ASOF[8:10]  # e.g. 2026-09-30 -> 260930
 TRADES = {'238220': 'Plumbing & HVAC', '238210': 'Electrical', '238160': 'Roofing', '238320': 'Painting',
           '238330': 'Flooring', '238910': 'Excavation & site prep', '561730': 'Landscaping', '561710': 'Pest control',
           '561720': 'Janitorial', '811111': 'Auto repair', '811121': 'Auto body', '811192': 'Car washes'}
@@ -31,7 +32,7 @@ def key(n):
     u = re.sub(r'[^A-Z0-9 ]', ' ', n.upper()); u = re.sub(r'\b(LLC|INC|CORP|CORPORATION|CO|COMPANY|L L C|PA|LTD)\b', ' ', u)
     return ' '.join(u.split())
 by = collections.defaultdict(list); i = 0
-files = sorted(glob.glob(os.path.join(SRC, 'FOIA_7a_FY2010_FY2019_asof_*.csv')) + glob.glob(os.path.join(SRC, 'FOIA_7a_FY2020_Present_asof_*.csv')))
+files = sorted(glob.glob(os.path.join(SRC, 'FOIA_7a_FY2010_FY2019_asof_' + TAG + '.csv')) + glob.glob(os.path.join(SRC, 'FOIA_7a_FY2020_Present_asof_' + TAG + '.csv')))
 assert len(files) == 2, files
 for f in files:
     for r in csv.DictReader(open(f, encoding='latin-1')):
