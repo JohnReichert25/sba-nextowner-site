@@ -8,7 +8,7 @@ body=re.sub(r'<sc-if ([^>]*)>',r'<template data-sc="if" \1>',body).replace('</sc
 body=re.sub(r'minmax\((\d+px), 1fr\)',r'minmax(min(\1, 100%), 1fr)',body)
 body=body.replace('type="number"','type="text" inputmode="numeric"')
 engine=r'''
-class DCLogic{constructor(p){this.props=p||{};}setState(o){Object.assign(this.state,o);window.__render();}}
+class DCLogic{constructor(p){this.props=p||{};}setState(o){Object.assign(this.state,o);if(window.__render)window.__render();}}
 JSCODE
 (function(){
 const tpl=document.getElementById('tpl');const root=document.getElementById('root');const comp=new Component({});
